@@ -1,0 +1,8 @@
+# 로컬 작업/참고용 파일 (배포 제외)
+편집기_프로토타입.html
+폰트_미리보기.html
+
+# OS 자동 생성
+.DS_Store
+Thumbs.db
+desktop.ini

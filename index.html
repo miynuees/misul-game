@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학생 편집기 · 조형 요소·원리 월드컵</title>
+<link href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Noto+Sans+KR:wght@400;500;700&family=Poor+Story&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, #fef3f5 0%, #e6f3ff 50%, #f0f9ff 100%);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 헤더 */
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    background: white;
+    padding: 18px 28px;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .header-center {
+    grid-column: 2;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .keyword-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .mission-hint {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+  .keyword-with-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .info-btn:hover {
+    background: #8b5cf6;
+    color: white;
+    transform: scale(1.1);
+  }
+  .keyword-popover {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    min-width: 260px;
+    max-width: 340px;
+    z-index: 50;
+    display: none;
+    animation: popFade 0.2s ease-out;
+  }
+  .keyword-popover::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 16px;
+    height: 16px;
+    background: #1f2937;
+  }
+  .keyword-popover.show { display: block; }
+  @keyframes popFade {
+    from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  .popover-title {
+    font-family: 'Dongle', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: #c4b5fd;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .popover-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e5e7eb;
+  }
+  .keyword-wrap {
+    position: relative;
+  }
+  .start-desc {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .start-desc-tag {
+    display: inline-block;
+    background: #8b5cf6;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    margin-right: 8px;
+  }
+  .start-desc-text {
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+  header .timer {
+    grid-column: 3;
+    justify-self: end;
+  }
+  .keyword-label {
+    color: #999;
+    font-size: 14px;
+  }
+  .keyword {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 52px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .header-x {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 32px;
+    color: #cbd5e1;
+    margin: 0 4px;
+  }
+  .header-motif {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 46px;
+    color: #f59e0b;
+    line-height: 1;
+  }
+  .page-title {
+    grid-column: 1;
+    justify-self: start;
+    font-family: 'Dongle', sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .timer {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 48px;
+    color: #ef4444;
+    background: #fef2f2;
+    padding: 6px 28px;
+    border-radius: 15px;
+    min-width: 150px;
+    text-align: center;
+    letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  .timer.warning { animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  /* 메인 */
+  .main {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+  .toolbar {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+  }
+  .tool-title {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .shape-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .shape-btn {
+    padding: 14px 8px;
+    border: 2px solid #e5e7eb;
+    background: #fafafa;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .shape-btn:hover {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+    transform: translateY(-2px);
+  }
+  .shape-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .order-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .order-grid .action-btn {
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+  .color-swatch {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.active {
+    border-color: #1f2937;
+    transform: scale(1.1);
+  }
+  .custom-color {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .custom-color input[type=color] {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+  .action-btn {
+    padding: 11px 15px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.15s;
+    font-weight: 600;
+  }
+  .action-btn:hover { transform: translateY(-1px); }
+  .action-btn.danger { background: #fee2e2; color: #dc2626; }
+  .action-btn.danger:hover { background: #fecaca; }
+  .action-btn.secondary { background: #f3f4f6; color: #4b5563; }
+  .action-btn.secondary:hover { background: #e5e7eb; }
+
+  /* 캔버스 영역 */
+  .canvas-wrap {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    max-width: 100%;
+    touch-action: none;
+  }
+
+  /* 제출 버튼 */
+  .submit-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 22px;
+    padding: 16px 50px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    align-self: center;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.45);
+  }
+
+  /* 시작 오버레이 */
+  .start-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,20,40,0.55);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .start-card {
+    background: white;
+    padding: 50px 70px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.4s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .start-card h1 {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 42px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .start-card .subtitle {
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .start-keyword-label {
+    color: #9ca3af;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .start-keyword {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 56px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 30px;
+  }
+  .mission-display {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .mission-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .mission-sub {
+    font-size: 12px;
+    color: #9ca3af;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .mission-word {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 68px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .mission-word.motif {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .mission-x {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 48px;
+    color: #d1d5db;
+    padding-top: 20px;
+  }
+  .start-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 28px;
+    padding: 6px 40px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+    transition: all 0.2s;
+    line-height: 1.2;
+  }
+  .start-btn:hover { transform: translateY(-2px); }
+  .start-hint {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #9ca3af;
+  }
+  .refresh-keyword {
+    display: inline-block;
+    margin-top: 8px;
+    color: #8b5cf6;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+  }
+  .refresh-kw {
+    color: #8b5cf6;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .refresh-kw:hover { background: #f5f3ff; }
+
+  /* 방 입장 폼 */
+  .join-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .join-label {
+    font-size: 13px;
+    color: #6b7280;
+    text-align: left;
+    margin-top: 6px;
+  }
+  .join-input {
+    padding: 14px 18px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 16px;
+    outline: none;
+    transition: border 0.15s;
+  }
+  .join-input:focus { border-color: #8b5cf6; }
+  .join-input.code {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 36px;
+    text-align: center;
+    letter-spacing: 10px;
+    text-transform: uppercase;
+  }
+  .join-error {
+    color: #ef4444;
+    font-size: 13px;
+    min-height: 18px;
+    margin-top: 4px;
+  }
+  .join-form .start-btn { margin-top: 12px; }
+
+  /* 대기 화면 */
+  .wait-info {
+    background: #f5f3ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px auto 24px;
+    max-width: 280px;
+  }
+  .wait-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 14px;
+    color: #4b5563;
+  }
+  .wait-row b {
+    color: #8b5cf6;
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 22px;
+    line-height: 1;
+  }
+  .wait-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .wait-dots span {
+    width: 10px;
+    height: 10px;
+    background: #c4b5fd;
+    border-radius: 50%;
+    animation: waitBounce 1.2s ease-in-out infinite;
+  }
+  .wait-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .wait-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes waitBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* 제출 완료 */
+  .done-preview {
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .done-preview img { width: 100%; display: block; }
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+    .toolbar { order: 2; }
+    header { flex-direction: column; gap: 12px; padding: 14px 18px; }
+    .keyword { font-size: 28px; }
+    .timer { font-size: 28px; padding: 6px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Phase 0: 방 입장 -->
+<div class="start-overlay" id="joinOverlay">
+  <div class="start-card">
+    <h1>🎨 조형 요소·원리 월드컵</h1>
+    <div class="subtitle">선생님이 알려준 방 코드를 입력하세요</div>
+    <div class="join-form">
+      <label class="join-label">이름</label>
+      <input type="text" id="studentNameInput" class="join-input" placeholder="예: 홍길동" maxlength="10">
+      <label class="join-label">방 코드 (4자리)</label>
+      <input type="text" id="roomCodeInput" class="join-input code" placeholder="ABCD" maxlength="4" autocapitalize="characters">
+      <button class="start-btn" onclick="joinRoom()">입장하기</button>
+      <div class="join-error" id="joinError"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 1: 선생님이 시작할 때까지 대기 -->
+<div class="start-overlay" id="waitOverlay" style="display:none;">
+  <div class="start-card">
+    <h1 id="waitTitle">잠시만 기다려 주세요 🎨</h1>
+    <div class="subtitle">선생님이 '시작'을 누르면 바로 시작해요</div>
+    <div class="wait-info">
+      <div class="wait-row"><span>이름</span><b id="waitName">-</b></div>
+      <div class="wait-row"><span>방 코드</span><b id="waitRoom">-</b></div>
+    </div>
+    <div class="wait-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- Phase 3: 제출 완료 -->
+<div class="start-overlay" id="doneOverlay" style="display:none;">
+  <div class="start-card">
+    <h1>🎉 제출 완료!</h1>
+    <div class="subtitle">결과가 나올 때까지 기다려 주세요</div>
+    <div class="done-preview" id="donePreview"></div>
+  </div>
+</div>
+
+<header>
+  <div class="page-title">🎨 조형 요소·원리 월드컵</div>
+  <div class="header-center">
+    <div class="keyword-wrap">
+      <span class="keyword-with-info">
+        <span class="keyword" id="keywordDisplay">대비</span>
+        <button class="info-btn" onclick="toggleKeywordPopover(event)" aria-label="설명 보기">?</button>
+      </span>
+      <span class="header-x">×</span>
+      <span class="header-motif" id="motifDisplay">고양이</span>
+      <div class="keyword-popover" id="keywordPopover">
+        <div class="popover-title" id="popoverTitle">대비</div>
+        <div class="popover-text" id="popoverText">서로 반대되는 요소가 만나 긴장감을 만드는 것</div>
+      </div>
+    </div>
+    <div class="mission-hint">위 두 키워드를 도형으로 표현해 보세요</div>
+  </div>
+  <div class="timer" id="timer">3:00</div>
+</header>
+
+<div class="main">
+  <div class="toolbar">
+    <div>
+      <div class="tool-title">🔷 도형 추가</div>
+      <div class="shape-grid">
+        <button class="shape-btn" onclick="addShape('rect')">
+          <svg viewBox="0 0 24 24" fill="#8b5cf6"><rect x="4" y="6" width="16" height="12"/></svg>
+          사각형
+        </button>
+        <button class="shape-btn" onclick="addShape('circle')">
+          <svg viewBox="0 0 24 24" fill="#8b5cf6"><circle cx="12" cy="12" r="8"/></svg>
+          원
+        </button>
+        <button class="shape-btn" onclick="addShape('triangle')">
+          <svg viewBox="0 0 24 24" fill="#8b5cf6"><polygon points="12,4 20,20 4,20"/></svg>
+          삼각형
+        </button>
+        <button class="shape-btn" onclick="addShape('line')">
+          <svg viewBox="0 0 24 24" stroke="#8b5cf6" stroke-width="3" fill="none"><line x1="4" y1="20" x2="20" y2="4"/></svg>
+          선
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="tool-title">🎨 색상</div>
+      <div class="color-grid" id="colorGrid"></div>
+      <div class="custom-color">
+        <input type="color" id="customColor" value="#8b5cf6" onchange="pickCustomColor(this.value)">
+        <span>직접 고르기</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="tool-title">🗂 순서</div>
+      <div class="order-grid">
+        <button class="action-btn secondary" onclick="layerToFront()" title="맨 앞으로">⏫ 맨앞</button>
+        <button class="action-btn secondary" onclick="layerForward()" title="한 칸 앞으로">🔼 앞</button>
+        <button class="action-btn secondary" onclick="layerBackward()" title="한 칸 뒤로">🔽 뒤</button>
+        <button class="action-btn secondary" onclick="layerToBack()" title="맨 뒤로">⏬ 맨뒤</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="tool-title">🛠 편집</div>
+      <button class="action-btn danger" onclick="removeSelected()" style="margin-bottom:6px; width:100%">선택 삭제</button>
+      <button class="action-btn secondary" onclick="clearAll()" style="width:100%">전체 지우기</button>
+    </div>
+
+    <div style="font-size: 12px; color: #9ca3af; line-height: 1.5; margin-top: auto; padding-top: 10px; border-top: 1px solid #f3f4f6;">
+      💡 도형 클릭 → 드래그/크기조절/회전<br>
+      💡 Del 키로 삭제
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="c" width="760" height="540"></canvas>
+  </div>
+</div>
+
+<button class="submit-btn" onclick="submitWork()">완성! 🎉</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+// 조형 키워드 풀
+const KEYWORDS = [
+  '명암', '형태', '공간', '질감',
+  '대비', '반복', '강조', '균형', '비례', '리듬',
+  '변화', '통일', '조화', '점증', '동세', '군집', '방사'
+];
+const KEYWORD_DESC = {
+  '명암': '빛과 그림자에 의한 밝고 어두움의 차이',
+  '형태': '입체감·부피감이 느껴지는 덩어리',
+  '공간': '원근감이나 깊이의 느낌',
+  '질감': '표면의 촉감 (거침, 매끄러움 등)',
+  '대비': '서로 반대되는 요소가 만나 긴장감을 만드는 것',
+  '반복': '같은 요소를 여러 번 되풀이하는 것',
+  '강조': '특정 부분을 두드러지게 해 시선을 모으는 것',
+  '균형': '시각적 무게가 한쪽으로 쏠리지 않은 안정된 상태',
+  '비례': '부분과 부분, 부분과 전체의 크기 관계',
+  '리듬': '요소의 반복과 변화로 느껴지는 움직임',
+  '변화': '같은 흐름 속에서 다름을 주어 지루함을 깨는 것',
+  '통일': '공통된 요소로 전체가 하나로 느껴지는 것',
+  '조화': '서로 다른 요소가 잘 어울리는 것',
+  '점증': '크기·색·형태가 점점 커지거나 강해지는 변화',
+  '동세': '움직이는 듯한 생동감과 방향감',
+  '군집': '여러 요소가 한데 모여 이루는 무리',
+  '방사': '중심에서 사방으로 뻗어나가는 구성'
+};
+const PALETTE = [
+  '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#06b6d4',
+  '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#111111',
+  '#fecaca', '#fde68a', '#bbf7d0', '#bfdbfe', '#ffffff'
+];
+
+// Firebase 초기화
+let db;
+try {
+  const app = initializeApp(window.FIREBASE_CONFIG);
+  db = getDatabase(app);
+} catch (err) {
+  alert('Firebase 연결 실패: ' + err.message);
+  throw err;
+}
+
+// 상태
+let canvas;
+let currentColor = '#8b5cf6';
+let timerInterval = null;
+let timeLeft = 180;
+let currentKeyword = '-';
+let currentMotif = '-';
+let roomCode = '';
+let studentName = '';
+let studentKey = '';
+let hasSubmitted = false;
+let roomStartedAt = 0;
+let roomState = '';
+
+window.addEventListener('DOMContentLoaded', () => {
+  canvas = new fabric.Canvas('c', { backgroundColor: '#ffffff' });
+
+  const grid = document.getElementById('colorGrid');
+  PALETTE.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (c === currentColor ? ' active' : '');
+    sw.style.background = c;
+    if (c === '#ffffff') sw.style.border = '2px solid #e5e7eb';
+    sw.onclick = () => selectColor(c, sw);
+    grid.appendChild(sw);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
+      if (document.activeElement.tagName === 'INPUT') return;
+      removeSelected();
+      e.preventDefault();
+    }
+  });
+
+  // 입장 폼 편의 기능
+  const codeInput = document.getElementById('roomCodeInput');
+  const nameInput = document.getElementById('studentNameInput');
+  codeInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+  codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
+  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
+});
+
+async function joinRoom() {
+  const name = document.getElementById('studentNameInput').value.trim();
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  const err = document.getElementById('joinError');
+
+  if (!name) { err.textContent = '이름을 입력해주세요'; return; }
+  if (code.length !== 4) { err.textContent = '방 코드는 4자리에요'; return; }
+  err.textContent = '';
+
+  try {
+    const snap = await get(ref(db, `rooms/${code}`));
+    if (!snap.exists()) { err.textContent = '그런 방 코드가 없어요'; return; }
+    if (snap.val().state === 'ended') { err.textContent = '이미 종료된 방이에요'; return; }
+  } catch (e) {
+    err.textContent = '방 확인 실패: ' + e.message;
+    return;
+  }
+
+  // 같은 탭 새로고침 시 같은 키 재사용 (참가자 중복 방지)
+  const SS_KEY = 'misul_student';
+  let stored = {};
+  try { stored = JSON.parse(sessionStorage.getItem(SS_KEY) || '{}'); } catch (e) {}
+  if (stored.code === code && stored.key) {
+    studentKey = stored.key;
+  } else {
+    studentKey = 'st_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now();
+  }
+  studentName = name;
+  roomCode = code;
+  sessionStorage.setItem(SS_KEY, JSON.stringify({ code, key: studentKey, name }));
+
+  const participantRef = ref(db, `rooms/${roomCode}/participants/${studentKey}`);
+  await set(participantRef, {
+    name: studentName,
+    joinedAt: Date.now()
+  });
+  // 창 닫거나 연결 끊기면 자동 제거
+  onDisconnect(participantRef).remove();
+
+  document.getElementById('waitName').textContent = studentName;
+  document.getElementById('waitRoom').textContent = roomCode;
+
+  document.getElementById('joinOverlay').style.display = 'none';
+  document.getElementById('waitOverlay').style.display = 'flex';
+
+  subscribeRoom();
+}
+
+function subscribeRoom() {
+  onValue(ref(db, `rooms/${roomCode}`), (snap) => {
+    const room = snap.val();
+    if (!room) return;
+    const prev = roomState;
+    roomState = room.state;
+    currentKeyword = room.keyword || '-';
+    currentMotif = room.motif || '-';
+    roomStartedAt = room.startedAt || 0;
+    updateKeywordDisplay();
+
+    if (roomState === 'playing' && prev !== 'playing') {
+      enterEditing();
+    } else if (roomState === 'ended' && !hasSubmitted) {
+      autoSubmit();
+    }
+  });
+}
+
+function updateKeywordDisplay() {
+  const desc = KEYWORD_DESC[currentKeyword] || '';
+  document.getElementById('keywordDisplay').textContent = currentKeyword;
+  document.getElementById('motifDisplay').textContent = currentMotif;
+  document.getElementById('popoverTitle').textContent = currentKeyword;
+  document.getElementById('popoverText').textContent = desc;
+}
+
+function enterEditing() {
+  document.getElementById('waitOverlay').style.display = 'none';
+  document.getElementById('joinOverlay').style.display = 'none';
+  startSyncedTimer();
+}
+
+function startSyncedTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  const tick = () => {
+    const elapsed = Math.floor((Date.now() - roomStartedAt) / 1000);
+    timeLeft = Math.max(0, 180 - elapsed);
+    updateTimerDisplay();
+    if (timeLeft <= 30) document.getElementById('timer').classList.add('warning');
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!hasSubmitted) autoSubmit();
+    }
+  };
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  document.getElementById('timer').textContent = `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function selectColor(c, el) {
+  currentColor = c;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const active = canvas.getActiveObject();
+  if (active) {
+    if (active.type === 'line') active.set('stroke', c);
+    else active.set('fill', c);
+    canvas.renderAll();
+  }
+}
+
+function pickCustomColor(c) { selectColor(c, null); }
+
+function addShape(type) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  let obj;
+  if (type === 'rect') obj = new fabric.Rect({ left: cx-60, top: cy-45, width: 120, height: 90, fill: currentColor });
+  else if (type === 'circle') obj = new fabric.Circle({ left: cx-55, top: cy-55, radius: 55, fill: currentColor });
+  else if (type === 'triangle') obj = new fabric.Triangle({ left: cx-55, top: cy-55, width: 110, height: 110, fill: currentColor });
+  else if (type === 'line') obj = new fabric.Line([cx-70, cy, cx+70, cy], { stroke: currentColor, strokeWidth: 8, strokeLineCap: 'round' });
+  canvas.add(obj);
+  canvas.setActiveObject(obj);
+  canvas.renderAll();
+}
+
+function layerToFront() { const a = canvas.getActiveObject(); if (a) { canvas.bringToFront(a); canvas.renderAll(); } }
+function layerForward() { const a = canvas.getActiveObject(); if (a) { canvas.bringForward(a); canvas.renderAll(); } }
+function layerBackward() { const a = canvas.getActiveObject(); if (a) { canvas.sendBackwards(a); canvas.renderAll(); } }
+function layerToBack() { const a = canvas.getActiveObject(); if (a) { canvas.sendToBack(a); canvas.renderAll(); } }
+
+function removeSelected() {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  if (active.type === 'activeSelection') {
+    active.forEachObject(o => canvas.remove(o));
+    canvas.discardActiveObject();
+  } else {
+    canvas.remove(active);
+  }
+  canvas.renderAll();
+}
+
+function clearAll() {
+  if (canvas.getObjects().length === 0) return;
+  if (confirm('전부 지울까요? 되돌릴 수 없어요!')) {
+    canvas.clear();
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+  }
+}
+
+function toggleKeywordPopover(ev) {
+  ev.stopPropagation();
+  document.getElementById('keywordPopover').classList.toggle('show');
+}
+
+document.addEventListener('click', (ev) => {
+  const pop = document.getElementById('keywordPopover');
+  if (!pop) return;
+  if (pop.classList.contains('show') &&
+      !pop.contains(ev.target) &&
+      !ev.target.closest('.info-btn')) {
+    pop.classList.remove('show');
+  }
+});
+
+async function submitWork() {
+  if (hasSubmitted) return;
+  if (timerInterval) clearInterval(timerInterval);
+
+  canvas.discardActiveObject().renderAll();
+  const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
+
+  try {
+    await set(ref(db, `rooms/${roomCode}/submissions/${studentKey}`), {
+      name: studentName,
+      image: dataURL,
+      keyword: currentKeyword,
+      motif: currentMotif,
+      submittedAt: Date.now()
+    });
+    hasSubmitted = true;
+
+    document.getElementById('donePreview').innerHTML = `<img src="${dataURL}" alt="내 작품">`;
+    document.getElementById('doneOverlay').style.display = 'flex';
+  } catch (err) {
+    alert('제출 실패! 다시 시도해주세요.\n\n' + err.message);
+  }
+}
+
+async function autoSubmit() {
+  if (hasSubmitted) return;
+  await submitWork();
+}
+
+// onclick 전역 노출
+window.joinRoom = joinRoom;
+window.addShape = addShape;
+window.pickCustomColor = pickCustomColor;
+window.layerToFront = layerToFront;
+window.layerForward = layerForward;
+window.layerBackward = layerBackward;
+window.layerToBack = layerToBack;
+window.removeSelected = removeSelected;
+window.clearAll = clearAll;
+window.toggleKeywordPopover = toggleKeywordPopover;
+window.submitWork = submitWork;
+</script>
+</body>
+</html>
