@@ -806,7 +806,7 @@ async function joinRoom() {
   const err = document.getElementById('joinError');
 
   if (!name) { err.textContent = '이름을 입력해주세요'; return; }
-  if (code.length !== 4) { err.textContent = '방 코드는 4자리에요'; return; }
+  if (!/^[A-Z0-9]{4}$/.test(code)) { err.textContent = '방 코드는 4자리 영문/숫자에요'; return; }
   err.textContent = '';
 
   try {

@@ -883,8 +883,15 @@ async function startTournament() {
   const subs = snap.val() || {};
   allSubmissions = Object.values(subs);
 
-  if (allSubmissions.length < 2) {
-    alert('제출된 작품이 2개 미만이라 토너먼트를 진행할 수 없어요.\n(접수된 작품: ' + allSubmissions.length + '개)');
+  if (allSubmissions.length === 0) {
+    alert('제출된 작품이 없어요. 새 게임을 시작해주세요.');
+    return;
+  }
+  if (allSubmissions.length === 1) {
+    // 1명만 제출 → 자동 우승
+    document.getElementById('phase3').style.display = 'none';
+    document.getElementById('phase4').style.display = 'none';
+    showChampion(allSubmissions[0]);
     return;
   }
 
