@@ -217,6 +217,72 @@
     margin-top: 6px;
   }
 
+  /* 시간 설정 */
+  .time-card {
+    background: white;
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+  }
+  .time-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .time-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .time-chip {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 2px solid transparent;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .time-chip:hover { background: #ede9fe; color: #7c3aed; }
+  .time-chip.active {
+    background: #ede9fe;
+    color: #7c3aed;
+    border-color: #8b5cf6;
+  }
+  .time-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fafafa;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    padding: 4px 10px;
+    color: #6b7280;
+    font-size: 13px;
+  }
+  .time-custom input {
+    width: 56px;
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    outline: none;
+  }
+  .time-custom input:focus { border-color: #8b5cf6; }
+
   /* Phase 3 */
   .room-code-small {
     text-align: center;
@@ -293,6 +359,31 @@
     transition: width 0.4s;
     width: 0%;
   }
+  .play-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .pause-btn {
+    background: #ede9fe;
+    color: #7c3aed;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .pause-btn:hover { background: #ddd6fe; }
+  .pause-btn.resume {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .pause-btn.resume:hover { background: #bbf7d0; }
   .end-early-btn {
     background: #fee2e2;
     color: #dc2626;
@@ -303,10 +394,23 @@
     font-family: inherit;
     font-size: 14px;
     font-weight: 600;
-    margin: 24px auto 0;
-    display: block;
   }
   .end-early-btn:hover { background: #fecaca; }
+  .timer-big.paused {
+    color: #6b7280;
+    animation: none;
+  }
+  .paused-label {
+    font-family: 'Dongle', sans-serif; font-weight: 700;
+    font-size: 32px;
+    color: #7c3aed;
+    margin-top: -10px;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+    line-height: 1;
+    display: none;
+  }
+  .paused-label.show { display: block; }
 
   /* Phase 4: 토너먼트 */
   .tournament-header {
@@ -569,6 +673,22 @@
     </div>
   </div>
 
+  <div class="time-card">
+    <span class="time-label">⏱ 게임 시간</span>
+    <div class="time-chips" id="timeChips">
+      <button class="time-chip" data-sec="60" onclick="setDuration(60)">1분</button>
+      <button class="time-chip" data-sec="120" onclick="setDuration(120)">2분</button>
+      <button class="time-chip active" data-sec="180" onclick="setDuration(180)">3분</button>
+      <button class="time-chip" data-sec="300" onclick="setDuration(300)">5분</button>
+      <button class="time-chip" data-sec="600" onclick="setDuration(600)">10분</button>
+      <span class="time-custom">
+        직접
+        <input type="number" id="customMinutes" min="1" max="30" placeholder="분" oninput="setCustomMinutes(this.value)">
+        분
+      </span>
+    </div>
+  </div>
+
   <div class="start-area">
     <button class="big-btn" onclick="startGame()">▶ 이 조합으로 시작하기</button>
   </div>
@@ -628,6 +748,7 @@
       <span class="mt" id="playMt">-</span>
     </div>
     <div class="timer-big" id="timerBig">3:00</div>
+    <div class="paused-label" id="pausedLabel">⏸ 일시정지 중</div>
     <div class="submit-progress">
       제출 <b id="submittedCount">0</b> / <b id="totalCount">0</b>명
     </div>
@@ -635,7 +756,10 @@
       <div class="progress-bar-fill" id="progressFill"></div>
     </div>
   </div>
-  <button class="end-early-btn" onclick="endGameEarly()">⏹ 시간 종료하기</button>
+  <div class="play-actions">
+    <button class="pause-btn" id="pauseBtn" onclick="togglePause()">⏸ 일시정지</button>
+    <button class="end-early-btn" onclick="endGameEarly()">⏹ 시간 종료하기</button>
+  </div>
 </div>
 
 </div>
@@ -698,6 +822,10 @@ let currentKeyword = '';
 let currentMotif = '';
 let timerInterval = null;
 let timeLeft = 180;
+let chosenDurationSec = 180;
+let gameStartedAt = 0;
+let isPaused = false;
+let pauseStartedAt = 0;
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -724,6 +852,33 @@ function updateKeywordExplain() {
   document.getElementById('explainText').textContent = KEYWORD_DESC[currentKeyword] || '';
 }
 
+function setDuration(sec) {
+  chosenDurationSec = sec;
+  document.querySelectorAll('#timeChips .time-chip').forEach(chip => {
+    chip.classList.toggle('active', Number(chip.dataset.sec) === sec);
+  });
+  const custom = document.getElementById('customMinutes');
+  // 프리셋과 일치하지 않을 때만 입력칸 유지, 일치하면 비움
+  const presetMatch = ['60','120','180','300','600'].includes(String(sec));
+  if (presetMatch && custom) custom.value = '';
+  syncDurationToRoom();
+}
+
+function setCustomMinutes(val) {
+  const m = Math.max(1, Math.min(30, Math.floor(Number(val) || 0)));
+  if (!m) return;
+  chosenDurationSec = m * 60;
+  document.querySelectorAll('#timeChips .time-chip').forEach(chip => chip.classList.remove('active'));
+  syncDurationToRoom();
+}
+
+async function syncDurationToRoom() {
+  if (!currentRoomCode) return;
+  try {
+    await update(ref(db, `rooms/${currentRoomCode}`), { durationSec: chosenDurationSec });
+  } catch (e) { console.warn('duration sync 실패', e); }
+}
+
 async function createRoom() {
   currentRoomCode = generateRoomCode();
   pickKeywordLocal();
@@ -734,6 +889,7 @@ async function createRoom() {
       state: 'waiting',
       keyword: currentKeyword,
       motif: currentMotif,
+      durationSec: chosenDurationSec,
       participants: {},
       submissions: {}
     });
@@ -783,9 +939,14 @@ function escapeHtml(s) {
 }
 
 async function startGame() {
+  gameStartedAt = Date.now();
+  isPaused = false;
+  pauseStartedAt = 0;
   await update(ref(db, `rooms/${currentRoomCode}`), {
     state: 'playing',
-    startedAt: Date.now()
+    startedAt: gameStartedAt,
+    durationSec: chosenDurationSec,
+    pausedAt: null
   });
   document.getElementById('phase2').style.display = 'none';
   document.getElementById('phase3').style.display = 'block';
@@ -796,9 +957,45 @@ async function startGame() {
   listenSubmissions();
 }
 
-function startTimer() {
-  timeLeft = 180;
+async function togglePause() {
+  const btn = document.getElementById('pauseBtn');
+  const big = document.getElementById('timerBig');
+  const label = document.getElementById('pausedLabel');
+  if (!isPaused) {
+    isPaused = true;
+    pauseStartedAt = Date.now();
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    big.classList.remove('warning');
+    big.classList.add('paused');
+    label.classList.add('show');
+    btn.textContent = '▶ 재개하기';
+    btn.classList.add('resume');
+    try {
+      await update(ref(db, `rooms/${currentRoomCode}`), { pausedAt: pauseStartedAt });
+    } catch (e) { console.warn(e); }
+  } else {
+    const pauseDuration = Date.now() - pauseStartedAt;
+    gameStartedAt += pauseDuration;
+    isPaused = false;
+    pauseStartedAt = 0;
+    big.classList.remove('paused');
+    label.classList.remove('show');
+    btn.textContent = '⏸ 일시정지';
+    btn.classList.remove('resume');
+    try {
+      await update(ref(db, `rooms/${currentRoomCode}`), {
+        startedAt: gameStartedAt,
+        pausedAt: null
+      });
+    } catch (e) { console.warn(e); }
+    startTimer(timeLeft);
+  }
+}
+
+function startTimer(resumeFrom) {
+  timeLeft = (typeof resumeFrom === 'number') ? resumeFrom : chosenDurationSec;
   updateTimerDisplay();
+  if (timeLeft <= 30) document.getElementById('timerBig').classList.add('warning');
   timerInterval = setInterval(() => {
     timeLeft--;
     updateTimerDisplay();
@@ -820,9 +1017,12 @@ function updateTimerDisplay() {
 
 async function endGame() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  isPaused = false;
+  pauseStartedAt = 0;
   await update(ref(db, `rooms/${currentRoomCode}`), {
     state: 'ended',
-    endedAt: Date.now()
+    endedAt: Date.now(),
+    pausedAt: null
   });
   // 1.5초 후 토너먼트 시작
   setTimeout(() => startTournament(), 1500);
@@ -1023,6 +1223,9 @@ window.pickMotif = pickMotif;
 window.startGame = startGame;
 window.endGameEarly = endGameEarly;
 window.pickWinner = pickWinner;
+window.setDuration = setDuration;
+window.setCustomMinutes = setCustomMinutes;
+window.togglePause = togglePause;
 </script>
 </body>
 </html>

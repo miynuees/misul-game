@@ -199,6 +199,16 @@
     line-height: 1.1;
   }
   .timer.warning { animation: pulse 1s infinite; }
+  .timer.paused {
+    color: #6b7280;
+    background: #f3f4f6;
+    animation: none;
+  }
+  .timer.paused::before {
+    content: '⏸ ';
+    font-size: 0.7em;
+    vertical-align: middle;
+  }
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
@@ -273,6 +283,16 @@
     padding: 10px 6px;
     font-size: 13px;
   }
+  .edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .edit-row .action-btn {
+    padding: 9px 6px;
+    font-size: 13px;
+  }
   .color-swatch {
     aspect-ratio: 1;
     border-radius: 8px;
@@ -318,6 +338,8 @@
   .action-btn.danger:hover { background: #fecaca; }
   .action-btn.secondary { background: #f3f4f6; color: #4b5563; }
   .action-btn.secondary:hover { background: #e5e7eb; }
+  .action-btn.copy { background: #ede9fe; color: #7c3aed; }
+  .action-btn.copy:hover { background: #ddd6fe; }
 
   /* 캔버스 영역 */
   .canvas-wrap {
@@ -693,13 +715,16 @@
 
     <div>
       <div class="tool-title">🛠 편집</div>
-      <button class="action-btn danger" onclick="removeSelected()" style="margin-bottom:6px; width:100%">선택 삭제</button>
-      <button class="action-btn secondary" onclick="clearAll()" style="width:100%">전체 지우기</button>
+      <div class="edit-row">
+        <button class="action-btn copy" onclick="copySelected()">📋 복사</button>
+        <button class="action-btn danger" onclick="removeSelected()">🗑 삭제</button>
+      </div>
+      <button class="action-btn secondary" onclick="clearAll()" style="width:100%">🧹 전체 지우기</button>
     </div>
 
     <div style="font-size: 12px; color: #9ca3af; line-height: 1.5; margin-top: auto; padding-top: 10px; border-top: 1px solid #f3f4f6;">
       💡 도형 클릭 → 드래그/크기조절/회전<br>
-      💡 Del 키로 삭제
+      💡 Del 키로 삭제 · Ctrl+D 복사
     </div>
   </div>
 
@@ -762,6 +787,7 @@ let canvas;
 let currentColor = '#8b5cf6';
 let timerInterval = null;
 let timeLeft = 180;
+let roomDurationSec = 180;
 let currentKeyword = '-';
 let currentMotif = '-';
 let roomCode = '';
@@ -769,6 +795,7 @@ let studentName = '';
 let studentKey = '';
 let hasSubmitted = false;
 let roomStartedAt = 0;
+let roomPausedAt = 0;
 let roomState = '';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -785,9 +812,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('keydown', (e) => {
+    if (document.activeElement.tagName === 'INPUT') return;
     if ((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
-      if (document.activeElement.tagName === 'INPUT') return;
       removeSelected();
+      e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && canvas.getActiveObject()) {
+      copySelected();
       e.preventDefault();
     }
   });
@@ -857,7 +887,10 @@ function subscribeRoom() {
     currentKeyword = room.keyword || '-';
     currentMotif = room.motif || '-';
     roomStartedAt = room.startedAt || 0;
+    roomDurationSec = room.durationSec || 180;
+    roomPausedAt = room.pausedAt || 0;
     updateKeywordDisplay();
+    updateTimerPausedStyle();
 
     if (roomState === 'playing' && prev !== 'playing') {
       enterEditing();
@@ -884,11 +917,13 @@ function enterEditing() {
 function startSyncedTimer() {
   if (timerInterval) clearInterval(timerInterval);
   const tick = () => {
-    const elapsed = Math.floor((Date.now() - roomStartedAt) / 1000);
-    timeLeft = Math.max(0, 180 - elapsed);
+    // 일시정지 중이면 pausedAt 시점 기준으로 elapsed 고정
+    const refNow = roomPausedAt || Date.now();
+    const elapsed = Math.floor((refNow - roomStartedAt) / 1000);
+    timeLeft = Math.max(0, roomDurationSec - elapsed);
     updateTimerDisplay();
-    if (timeLeft <= 30) document.getElementById('timer').classList.add('warning');
-    if (timeLeft <= 0) {
+    if (!roomPausedAt && timeLeft <= 30) document.getElementById('timer').classList.add('warning');
+    if (timeLeft <= 0 && !roomPausedAt) {
       clearInterval(timerInterval);
       if (!hasSubmitted) autoSubmit();
     }
@@ -897,10 +932,26 @@ function startSyncedTimer() {
   timerInterval = setInterval(tick, 1000);
 }
 
+function updateTimerPausedStyle() {
+  const t = document.getElementById('timer');
+  if (!t) return;
+  if (roomPausedAt) {
+    t.classList.add('paused');
+    t.classList.remove('warning');
+  } else {
+    t.classList.remove('paused');
+  }
+}
+
 function updateTimerDisplay() {
   const m = Math.floor(timeLeft / 60);
   const s = timeLeft % 60;
   document.getElementById('timer').textContent = `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function applyColorTo(obj, c) {
+  if (obj.type === 'line') obj.set('stroke', c);
+  else obj.set('fill', c);
 }
 
 function selectColor(c, el) {
@@ -909,8 +960,11 @@ function selectColor(c, el) {
   if (el) el.classList.add('active');
   const active = canvas.getActiveObject();
   if (active) {
-    if (active.type === 'line') active.set('stroke', c);
-    else active.set('fill', c);
+    if (active.type === 'activeSelection') {
+      active.forEachObject(o => applyColorTo(o, c));
+    } else {
+      applyColorTo(active, c);
+    }
     canvas.renderAll();
   }
 }
@@ -945,6 +999,28 @@ function removeSelected() {
     canvas.remove(active);
   }
   canvas.renderAll();
+}
+
+function copySelected() {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  active.clone((cloned) => {
+    canvas.discardActiveObject();
+    cloned.set({
+      left: (active.left || 0) + 24,
+      top: (active.top || 0) + 24,
+      evented: true,
+    });
+    if (cloned.type === 'activeSelection') {
+      cloned.canvas = canvas;
+      cloned.forEachObject(o => canvas.add(o));
+      cloned.setCoords();
+    } else {
+      canvas.add(cloned);
+    }
+    canvas.setActiveObject(cloned);
+    canvas.renderAll();
+  });
 }
 
 function clearAll() {
@@ -1009,6 +1085,7 @@ window.layerForward = layerForward;
 window.layerBackward = layerBackward;
 window.layerToBack = layerToBack;
 window.removeSelected = removeSelected;
+window.copySelected = copySelected;
 window.clearAll = clearAll;
 window.toggleKeywordPopover = toggleKeywordPopover;
 window.submitWork = submitWork;
